@@ -8,7 +8,7 @@ from pyglet.window import key
 
 from helpers import TERRITORY_CACHE, load_image
 from clients import KeyboardClient, SimplePythonClient, FileClient
-from constants import LR_CLIENTS_MAX_COUNT, MAX_TICK_COUNT
+from constants import LR_CLIENTS_MAX_COUNT, MAX_TICK_COUNT, WINDOW_WIDTH, WINDOW_HEIGHT
 from game_objects.scene import Scene
 from game_objects.game import LocalGame
 
@@ -50,6 +50,11 @@ if len(clients) == 0:
 
 class Runner:
     @staticmethod
+    def game_over_loop(dt):
+        Runner.game.scene.clear()
+        Runner.game.draw()
+
+    @staticmethod
     def game_loop_wrapper(dt):
         is_game_over = loop.run_until_complete(Runner.game.game_loop())
         if is_game_over or (args.timeout == 'on' and Runner.game.tick >= MAX_TICK_COUNT):
@@ -81,7 +86,23 @@ class Runner:
         return pyglet.event.EVENT_HANDLED
 
     @staticmethod
+    @scene.window.event
+    def on_resize(width, height):
+        (actual_width, actual_height) = scene.window.get_viewport_size()
+        glViewport(0, 0, actual_width, actual_height)
+        glMatrixMode(gl.GL_PROJECTION)
+        glLoadIdentity()
+
+        factScale = max(WINDOW_WIDTH / actual_width, WINDOW_HEIGHT / actual_height)
+        xMargin = (actual_width * factScale - WINDOW_WIDTH) / 2
+        yMargin = (actual_height * factScale - WINDOW_HEIGHT) / 2
+        glOrtho(-xMargin, WINDOW_WIDTH + xMargin, -yMargin, WINDOW_HEIGHT + yMargin, -1, 1)
+        glMatrixMode(gl.GL_MODELVIEW)
+        return pyglet.event.EVENT_HANDLED
+
+    @staticmethod
     def stop_game():
+        pyglet.clock.schedule_interval(Runner.game_over_loop, 1 / 200)
         pyglet.clock.unschedule(Runner.game_loop_wrapper)
 
     @staticmethod
@@ -95,6 +116,7 @@ class Runner:
 
     @staticmethod
     def run_game():
+        pyglet.clock.unschedule(Runner.game_over_loop)
         Runner.load_sprites()
         Runner.game = LocalGame(clients, scene, args.timeout == 'on')
         Runner.game.send_game_start()
