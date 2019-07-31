@@ -3,7 +3,7 @@ MAINTAINER Boris Kolganov <b.kolganov@corp.mail.ru>
 
 RUN add-apt-repository ppa:jonathonf/python-3.6 && \
   apt-get update && apt-get install -y python3.6 python3-pip && \
-  python3.6 -m pip install -U numpy scipy cython scikit-learn keras pandas tensorflow==1.5.0
+  python3.6 -m pip install -U numpy scipy cython scikit-learn pandas
 
 ENV SOLUTION_CODE_ENTRYPOINT=main.py
 ENV SOLUTION_CODE_PATH=/opt/client/solution
